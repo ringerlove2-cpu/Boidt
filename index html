@@ -1,0 +1,155 @@
+
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WinGo Analysis Dashboard</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#080d19;color:#f1f5f9;font-family:Arial,sans-serif;padding:16px}
+header{padding:18px 0;color:#60a5fa;font-size:25px;font-weight:bold}
+.card{background:#121b2c;border:1px solid #28364d;border-radius:14px;padding:16px;margin:12px 0}
+h3{margin:0 0 14px;color:#93c5fd}
+.value{font-size:26px;font-weight:bold;margin-top:8px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+input,select,button{width:100%;padding:12px;margin:5px 0;border-radius:8px;border:1px solid #334155;background:#0b1220;color:white}
+button{background:#2563eb;border:0;font-weight:bold;cursor:pointer}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:10px 5px;border-bottom:1px solid #334155;text-align:center}
+.muted{color:#94a3b8;font-size:13px;line-height:1.6}
+.green{color:#4ade80}.red{color:#fb7185}
+</style>
+</head>
+<body>
+<header>⚡ WinGo Analysis</header>
+<p class="muted">Demo dashboard · स्वतंत्र परिणाम विश्लेषण</p>
+
+<div class="card">
+<h3>Period & Result Entry</h3>
+<label>Period Number</label>
+<input id="period" placeholder="जैसे 20261018001">
+<label>Result Number (0–9)</label>
+<select id="num">
+<option value="0">0</option><option value="1">1</option>
+<option value="2">2</option><option value="3">3</option>
+<option value="4">4</option><option value="5">5</option>
+<option value="6">6</option><option value="7">7</option>
+<option value="8">8</option><option value="9">9</option>
+</select>
+<button onclick="addResult()">Add Result</button>
+<button onclick="clearHistory()" style="background:#475569">Clear History</button>
+</div>
+
+<div class="grid">
+<div class="card">
+<div class="muted">Total Results</div>
+<div class="value" id="total">0</div>
+</div>
+<div class="card">
+<div class="muted">Last Number</div>
+<div class="value" id="last">—</div>
+</div>
+<div class="card">
+<div class="muted">Big Count (5–9)</div>
+<div class="value" id="big">0</div>
+</div>
+<div class="card">
+<div class="muted">Small Count (0–4)</div>
+<div class="value" id="small">0</div>
+</div>
+</div>
+
+<div class="card">
+<h3>Result Frequency</h3>
+<div id="frequency" class="muted">अभी कोई परिणाम नहीं है।</div>
+</div>
+
+<div class="card">
+<h3>Recent History</h3>
+<div style="overflow-x:auto">
+<table>
+<thead><tr><th>Period</th><th>Number</th><th>Group</th></tr></thead>
+<tbody id="history"></tbody>
+</table>
+</div>
+</div>
+
+<div class="card">
+<h3>Analysis Note</h3>
+<p class="muted" id="note">Analysis देखने के लिए परिणाम जोड़ें।</p>
+<p class="muted">यह demo है। परिणाम अपने आप 91Club से नहीं आते। Frequency केवल पुराने डेटा का सारांश है, भविष्य के परिणाम की गारंटी नहीं।</p>
+</div>
+
+<script>
+let results = [];
+
+function addResult(){
+  const period = document.getElementById('period').value.trim();
+  const number = Number(document.getElementById('num').value);
+
+  if(!period){
+    alert('Period number दर्ज करें');
+    return;
+  }
+  if(results.some(r => r.period === period)){
+    alert('यह period पहले से मौजूद है');
+    return;
+  }
+
+  results.unshift({
+    period,
+    number,
+    group: number >= 5 ? 'Big' : 'Small'
+  });
+
+  render();
+}
+
+function clearHistory(){
+  if(confirm('सभी demo results हटाएं?')){
+    results = [];
+    render();
+  }
+}
+
+function render(){
+  document.getElementById('total').textContent = results.length;
+  document.getElementById('last').textContent =
+    results.length ? results[0].number : '—';
+
+  document.getElementById('big').textContent =
+    results.filter(r => r.number >= 5).length;
+
+  document.getElementById('small').textContent =
+    results.filter(r => r.number < 5).length;
+
+  const counts = Array(10).fill(0);
+  results.forEach(r => counts[r.number]++);
+
+  document.getElementById('frequency').innerHTML =
+    counts.map((n,i) => `${i}: ${n} बार`).join(' &nbsp; | &nbsp; ');
+
+  document.getElementById('history').innerHTML =
+    results.map(r => `<tr>
+      <td>${escapeHtml(r.period)}</td>
+      <td>${r.number}</td>
+      <td class="${r.group==='Big'?'green':'red'}">${r.group}</td>
+    </tr>`).join('');
+
+  document.getElementById('note').textContent = results.length
+    ? `कुल ${results.length} परिणाम दर्ज हैं। ये केवल ऐतिहासिक आँकड़े हैं।`
+    : 'Analysis देखने के लिए परिणाम जोड़ें।';
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;',
+    '"':'&quot;',"'":'&#39;'
+  })[c]);
+}
+
+render();
+</script>
+</body>
+</html>
